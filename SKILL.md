@@ -14,8 +14,12 @@ Within the same conversation session, reference files you have **already read re
 
 1. **NEVER re-read** a file you have already read this session.
 2. **NEVER re-read** `references/design_system.md` if it was read earlier.
-3. **Design system:** `references/design_system.md`（GTS token 表 + 换肤协议 + Element Plus 组件要点）— **每 session 读一次**，写码前必读。
-4. **Element Plus API:** 标准 Element Plus 2.x API — trust your knowledge；场景选型/Don'ts 见 design_system 组件要点章节。
+3. **Design system:** `references/design_system.md` — **仅在以下场景读取**（日常生成页面不需要读，SKILL.md 已内嵌 token 速查 + 布局选型 + 代码模式）：
+   - 用户提供自定义皮肤 CSS → 读「换肤协议」（5 条接入规则）
+   - 用户要求深色模式/多皮肤 → 读 `--gts-mix-base` 覆盖规则
+   - 用户询问"某场景该用哪个 token" → 读「Token 全表」的场景注释列
+   - 用户问某组件的 Don'ts → 读「Element Plus 组件要点」表格
+4. **Element Plus API:** 标准 Element Plus 2.x API — trust your knowledge。
 5. 模板与协议以本文档为准，无需读模板文件本身。
 
 ## Output Contract (READ FIRST)
@@ -55,7 +59,7 @@ Within the same conversation session, reference files you have **already read re
 
 ## 换肤系统（Skin System）
 
-- 页面消费 token（完整清单见 `references/design_system.md`）→ 任何皮肤下自动跟随。
+- 页面消费 token（完整清单见「附录 A — Token 速查」）→ 任何皮肤下自动跟随。
 - 运行时切换：`document.documentElement.setAttribute('data-gts-theme', '<name>')`。
 - 新皮肤（仅当用户提供皮肤 css 时）：文件放 `src/assets/themes/gts-{name}.css` → `index.gts.html` 换肤插槽追加 `<link>` →（真实工程）`main.js` 插槽追加 `import`。协议详见 `src/assets/themes/README.md`。
 
@@ -103,13 +107,24 @@ Within the same conversation session, reference files you have **already read re
 2. 复用性子组件放 `pages/{PageName}/components/*.vue`；跨页复用组件才放 `src/components/`。
 3. 复杂逻辑可抽 `use-xxx.js` composable（同目录）。
 
+### Step 3.5 — 生成前自检（MANDATORY，build 前必做）
+
+对照以下规则逐项自查（详细说明见对应章节）：
+1. **相对 import 路径**层级正确（见「页面代码规范」item 9）
+2. **图标名 / el-\* 组件名 / token 名**精确匹配（见「附录 A 速查表」）
+3. **PascalCase / kebab-case 组件标签**都有对应 import
+4. **`<style>` 内**无 `:root` / `[data-gts-theme]` / `--gts-*:` 定义
+5. **裸 import** 仅限 vue / element-plus / @element-plus/icons-vue / dayjs
+6. **`v-for` 有 `:key`**；`v-if` 不与 `v-for` 同标签
+
 ### Step 4 — Verify（MANDATORY，自动刷新预览）
 ```
 node scripts/build.mjs --dir "{artifact-folder}/{slug}"
 ```
-- **Success:** `OK index.gts.html verified (1 page, N components, M el-tag uses)`（并已自动重新生成 preview-data.js）
-- **Failure:** `RESULT: FAIL | <文件>: <原因>` → 修复 → 重跑直到通过。
-- 校验覆盖：每个 .vue 经**真实 @vue/compiler-sfc** parse + compileScript + compileTemplate（抓语法错误、未闭合标签、非法指令/表达式）；`<el-*>` 组件白名单（121 个官方组件）；element-plus/icons 导出名合法性；PascalCase/kebab 组件标签必须对应真实 import；相对 import 必须可解析；裸依赖白名单；js 文件 ESM 语法检查；token 存在性与换肤卫生检查。
+- **Success:** `OK index.gts.html verified (N pages, M components, K el-tag uses)`
+- **Failure:** `RESULT: FAIL | <文件>: <原因>` → 修复 → 重跑
+- **失败恢复策略:** 最多重试 3 次。连续 3 次失败后停止，向用户报告最后的错误信息。每次修复应针对错误信息精确修改，不要重写整个文件。
+- 校验覆盖：@vue/compiler-sfc 编译 + el-* 组件白名单(121) + 图标白名单(293) + 导出白名单 + 相对 import 解析 + 裸依赖白名单 + ESM 语法 + token 存在性 + 样式卫生。
 
 ### Step 5 — Output
 ```
@@ -121,7 +136,6 @@ node scripts/build.mjs --dir "{artifact-folder}/{slug}"
 ## Modification Workflow
 
 用户要求修改已生成页面时，**不要重新生成**：
-
 1. **Locate:** `{artifact-folder}/{slug}/src/...`（上次运行的 SRC_DIR）。
 2. **Edit:** 只做请求的改动 — 未提及内容保持不变（无重新生成漂移）。
 3. **Re-verify:** 重跑 `build.mjs`（自动刷新 preview-data.js）→ 输出同一 `<artifact>` link。
@@ -130,6 +144,12 @@ node scripts/build.mjs --dir "{artifact-folder}/{slug}"
 
 ## 页面代码规范（src/ 内 .vue 文件）
 
+0. **页面布局选型:**
+   - B 端控制台：`el-container`（aside 侧导航 + header 顶栏 + main 内容区）
+   - 列表页：标题行 → 筛选行 → `el-table` → `el-pagination`
+   - 看板页：顶部 KPI 卡片行 → 下方图表/数据区
+   - 内容页：单栏，`gts-page-root` 容器（padding 20-24px）
+   - 间距：4 的倍数 px；区块间 16-24px，组件内 8-12px
 1. **组件写法:** `<script setup>` 优先；`defineProps`/`defineEmits` 声明组件契约并注释 props。
 2. **imports 顺序:** vue → element-plus → @element-plus/icons-vue → dayjs → 相对子组件/素材。**支持的相对导入：** `.vue` 组件 / `.js` ESM 模块（mock 数据、composables）/ `.json` 数据（default 导入拿到对象）/ 图片（`import url from '...png'` 得到 URL）/ `.css`（慎用，页面样式优先 `<style scoped>`）— 以上在预览与 Vite 工程中语义一致；动态 `import()` 亦可用。
 3. **mock 数据:** 语义化 key（`deviceName` 禁止 `val1`）；状态配 `STATUS_MAP`（label + el-tag type）；主列表 ≥ 10 条状态多样，次级列表 5–6 条；头像 `https://randomuser.me/api/portraits/{men|women}/{1-99}.jpg`，通用图 `https://fpoimg.com/{w}x{h}?...`。（IMAGE 输入按图转录。）
@@ -138,6 +158,33 @@ node scripts/build.mjs --dir "{artifact-folder}/{slug}"
 6. **样式:** `<style scoped>`，类名 `gts-page-*`，间距 px 直写，颜色 token。媒体 URL 走 import。
 7. **表格:** `el-table` + `el-table-column`；自定义列 `<template #default="{ row }">`；操作列 `fixed="right"` ≤3 个按钮（多了收进 `el-dropdown`）；≥8 条数据配 `el-pagination`。
 8. **dayjs** 已在依赖白名单内，日期格式化直接用。
+9. **相对路径计算（最易错项）:**
+   ```
+   src/
+   ├── pages/DeviceManagement/
+   │   ├── index.vue                          ← 页面主组件
+   │   └── components/StatusTag.vue           ← 子组件
+   ├── assets/uploads/logo.png               ← 素材
+   └── components/SharedCard.vue              ← 跨页复用组件
+
+   从 index.vue 引用:
+     子组件:  import StatusTag from './components/StatusTag.vue'
+     素材:    import logo from '../../assets/uploads/logo.png'        ← ../.. 回到 src/
+     跨页组件: import SharedCard from '../../components/SharedCard.vue'
+
+   从 components/StatusTag.vue 引用:
+     素材:    import logo from '../../../assets/uploads/logo.png'     ← ../../.. 回到 src/
+   ```
+
+---
+
+## 运行时错误预防（build 不覆盖）
+
+build.mjs 只检查编译时问题。以下运行时错误会导致页面白屏或显示异常：
+
+1. **el-select v-model 值必须在 options 中:** 初始值必须是某个 `el-option` 的 `value`，否则显示裸值。建议初始值 `''`（配合 `clearable`）。
+2. **el-table column prop 与 data key 匹配:** `prop="xxx"` 必须对应数据对象的实际 key，否则列空白。
+3. **template 不引用未声明的变量:** `<script setup>` 中未定义的变量在模板中不渲染但不报错。确保所有模板引用的变量/函数都在 script 中声明。
 
 ---
 
@@ -151,14 +198,205 @@ node scripts/build.mjs --dir "{artifact-folder}/{slug}"
 
 ## Quality Checklist (Self-Verify Before Output)
 
-1. `init.mjs` → `RESULT: OK`；`build.mjs` → `OK index.gts.html verified`
-2. 无白名单外依赖；相对 import 全部可解析；无拼错的组件/图标名
-3. 所有 .vue 通过 compiler-sfc 编译；scoped 样式类名带 `gts-page-` 前缀
-4. 颜色 token 化；SFC 样式无 `:root`/`[data-gts-theme]`/`--gts-*` 定义
-5. mock 数据量与状态多样性达标；`<artifact>` 已输出
+- Step 3.5 全部通过 ✓
+- `build.mjs` → `RESULT: OK` ✓
+- mock 数据量达标（主列表 ≥ 10 条，状态多样）
+- `<artifact>` 已输出 HTML_PATH
+
+---
+
+## 附录 A — 速查表与错误预防
+
+### 高频错误预防（build 拦截项，错误→正确对比）
+
+| # | 错误写法 | 正确写法 | 原因 |
+|---|---------|---------|------|
+| 1 | `import { Searchh } from '@element-plus/icons-vue'` | `import { Search } from '@element-plus/icons-vue'` | 图标名不在 293 白名单 |
+| 2 | `<el-table-cloumn>` | `<el-table-column>` | 组件名不在 121 白名单 |
+| 3 | `<StatusTag />` 但没 import | `import StatusTag from './components/StatusTag.vue'` | 标签无对应 import |
+| 4 | `import logo from '../assets/uploads/logo.png'` | `import logo from '../../assets/uploads/logo.png'` | 路径少一级 |
+| 5 | `import { ElToast } from 'element-plus'` | `import { ElMessage } from 'element-plus'` | 导出名不在白名单 |
+| 6 | `var(--gts-color-blue)` | `var(--gts-color-primary)` | token 未定义 |
+| 7 | `<style>` 内 `:root { --gts-x: #fff }` | token 在 `src/assets/themes/` | style 禁止 :root |
+| 8 | `--gts-color-x: #fff` | `--gts-page-color-x: #fff` | 局部变量需 --gts-page- 前缀 |
+| 9 | `slot-scope="scope"` | `<template #default="{ row }">` | 旧语法编译失败 |
+| 10 | `v-if` 和 `v-for` 同标签 | 分开到不同标签 | 编译错误 |
+| 11 | `src="/assets/uploads/x.png"` | `import img from '../../assets/uploads/x.png'` | 预览无法解析裸路径 |
+
+### 常用图标（import from '@element-plus/icons-vue'，大小写敏感）
+
+```
+Search  Plus  Edit  Delete  View  Download  Upload  Refresh  Setting  User
+Lock  Check  Close  Warning  InfoFilled  SuccessFilled  CircleClose
+ArrowDown  ArrowUp  ArrowLeft  ArrowRight  Monitor  DataAnalysis  DataBoard
+Grid  Menu  Operation  Tools  More  MoreFilled  Filter  Sort  FullScreen
+Document  Folder  Calendar  Clock  Timer  Message  Bell  Star  StarFilled
+ZoomIn  ZoomOut  Expand  Fold  Promotion  Notification  Collection
+TrendCharts  Tickets  Rank  Aim  Position  Pointer  ChatDotRound  ChatLineRound
+```
+（完整 293 个图标见 Element Plus 官方文档；拼错 = build 拦截 + "did you mean" 提示）
+
+### 常用 el-\* 组件（121 个白名单中最常用的）
+
+```
+el-button  el-input  el-select  el-option  el-table  el-table-column
+el-pagination  el-form  el-form-item  el-dialog  el-drawer  el-tag
+el-icon  el-menu  el-menu-item  el-container  el-header  el-aside  el-main
+el-row  el-col  el-card  el-tabs  el-tab-pane  el-tooltip  el-dropdown
+el-dropdown-menu  el-dropdown-item  el-date-picker  el-input-number
+el-switch  el-radio  el-radio-group  el-checkbox  el-checkbox-group
+el-empty  el-divider  el-avatar  el-badge  el-alert  el-progress
+el-breadcrumb  el-breadcrumb-item  el-steps  el-step  el-collapse
+el-collapse-item  el-tree  el-cascader  el-upload  el-slider  el-rate
+el-backtop  el-scrollbar  el-skeleton  el-result  el-descriptions
+el-statistic  el-watermark
+```
+
+### Token 速查（var(--gts-\*)，使用不在本表中的 token = build 拦截）
+
+```
+品牌色: --gts-color-primary  -hover  -active  -on-primary  -primary-container  -on-primary-container
+功能色: --gts-color-success  -warning  -danger  -error  -info
+文本色: --gts-text-1  -2  -3  -4  -disabled  -inverse
+背景色: --gts-bg-page  -container  -overlay  -hover  -fill
+边框色: --gts-border-1  -2
+其他:   --gts-mask  --gts-shadow-1  -2  -3  --gts-radius-sm  -md  -lg  -full  --gts-font-family
+```
+
+### element-plus 服务类导出（import from 'element-plus'）
+
+```
+ElMessage  ElMessageBox  ElNotification  ElLoading  ElLoadingService  ElLoadingDirective
+```
+（仅此 6 个服务类导出；El* 组件类导出用 `<el-xxx>` 标签即可，无需 import）
+
+## 附录 B — 代码模式速查（正确写法参考）
+
+### 状态映射表 + el-tag（最常用模式）
+
+```vue
+<script setup>
+const STATUS_MAP = {
+  running: { label: '运行中', type: 'success' },
+  stopped: { label: '已停止', type: 'danger' },
+  pending: { label: '待审核', type: 'warning' },
+  idle:    { label: '空闲', type: 'info' },
+}
+const statusList = [
+  { id: 1, deviceName: '服务器A', status: 'running', ip: '192.168.1.10' },
+  { id: 2, deviceName: '服务器B', status: 'stopped', ip: '192.168.1.11' },
+]
+</script>
+<template>
+  <el-table :data="statusList" v-loading="loading">
+    <el-table-column prop="deviceName" label="设备名称" />
+    <el-table-column prop="ip" label="IP地址" />
+    <el-table-column label="状态">
+      <template #default="{ row }">
+        <el-tag :type="STATUS_MAP[row.status]?.type">{{ STATUS_MAP[row.status]?.label }}</el-tag>
+      </template>
+    </el-table-column>
+  </el-table>
+</template>
+```
+
+### 表格操作列（≤3 按钮 + dropdown 收纳）
+
+```vue
+<el-table-column label="操作" fixed="right" width="180">
+  <template #default="{ row }">
+    <el-button link type="primary" :icon="View" @click="handleView(row)">查看</el-button>
+    <el-button link type="primary" :icon="Edit" @click="handleEdit(row)">编辑</el-button>
+    <el-dropdown @command="(cmd) => handleCommand(cmd, row)">
+      <el-button link type="primary">更多<el-icon><ArrowDown /></el-icon></el-button>
+      <template #dropdown>
+        <el-dropdown-menu>
+          <el-dropdown-item command="export">导出</el-dropdown-item>
+          <el-dropdown-item command="delete" divided>删除</el-dropdown-item>
+        </el-dropdown-menu>
+      </template>
+    </el-dropdown>
+  </template>
+</el-table-column>
+```
+
+### 筛选行 + 分页（列表页标配）
+
+```vue
+<el-row :gutter="16" style="margin-bottom: 16px">
+  <el-col :span="6">
+    <el-input v-model="query.keyword" placeholder="搜索设备名称" :prefix-icon="Search" clearable />
+  </el-col>
+  <el-col :span="4">
+    <el-select v-model="query.status" placeholder="状态筛选" clearable>
+      <el-option v-for="item in statusOptions" :key="item.value" :label="item.label" :value="item.value" />
+    </el-select>
+  </el-col>
+  <el-col :span="6">
+    <el-button type="primary" :icon="Search" @click="fetchData">查询</el-button>
+    <el-button @click="resetQuery">重置</el-button>
+  </el-col>
+</el-row>
+
+<el-pagination
+  v-model:current-page="currentPage"
+  v-model:page-size="pageSize"
+  :total="total"
+  :page-sizes="[10, 20, 50]"
+  layout="total, sizes, prev, pager, next, jumper"
+  background
+  @size-change="fetchData"
+  @current-change="fetchData"
+/>
+```
+
+### Dialog 表单（新增/编辑共用）
+
+```vue
+<el-dialog v-model="dialogVisible" :title="dialogTitle" width="500px">
+  <el-form ref="formRef" :model="form" :rules="rules" label-width="80px">
+    <el-form-item label="名称" prop="name">
+      <el-input v-model="form.name" placeholder="请输入名称" />
+    </el-form-item>
+    <el-form-item label="状态" prop="status">
+      <el-select v-model="form.status" placeholder="请选择">
+        <el-option v-for="item in statusOptions" :key="item.value" :label="item.label" :value="item.value" />
+      </el-select>
+    </el-form-item>
+  </el-form>
+  <template #footer>
+    <el-button @click="dialogVisible = false">取消</el-button>
+    <el-button type="primary" :loading="submitting" @click="handleSubmit">确定</el-button>
+  </template>
+</el-dialog>
+```
+
+### KPI 指标卡片（看板页标配）
+
+```vue
+<el-row :gutter="16" style="margin-bottom: 16px">
+  <el-col :span="6" v-for="item in kpiData" :key="item.label">
+    <el-card shadow="hover">
+      <div style="display: flex; align-items: center; justify-content: space-between">
+        <div>
+          <div style="font-size: 13px; color: var(--gts-text-3)">{{ item.label }}</div>
+          <div style="font-size: 28px; font-weight: 700; color: var(--gts-text-1); margin-top: 4px">{{ item.value }}</div>
+          <div style="font-size: 12px; color: var(--gts-text-4); margin-top: 4px">{{ item.trend }}</div>
+        </div>
+        <el-icon :size="40" :color="item.color"><component :is="item.icon" /></el-icon>
+      </div>
+    </el-card>
+  </el-col>
+</el-row>
+```
+
+> **完整页面示例** 见 `references/code_patterns.md`（按需查阅，非必读 — 上述片段已覆盖日常生成；仅当遇到复杂场景或首次使用本 skill 时参考）。
+
+---
 
 ## References
 
-- **[references/design_system.md](references/design_system.md)** — GTS token 全表（含场景注释）、换肤协议、布局规范、Element Plus 组件要点与 Don'ts
+- **[references/code_patterns.md](references/code_patterns.md)** — 完整列表页代码示例（按需查阅，非必读 — SKILL.md 内速查表已覆盖日常生成；仅当首次使用或遇到复杂场景时参考）
+- **[references/design_system.md](references/design_system.md)** — GTS token 全表（含场景注释）、换肤协议、布局规范、Element Plus 组件要点与 Don'ts（按需查阅 — SKILL.md 已内嵌 token 速查 + 布局选型 + 代码模式）
 - **[scripts/preview/src/assets/themes/README.md](scripts/preview/src/assets/themes/README.md)** — 皮肤文件协议（用户接入自有换肤样式的操作手册）
 - **[scripts/preview/src/README.md](scripts/preview/src/README.md)** — 交付件接入说明（拷入真实工程的步骤，随 src/ 一起交付）
