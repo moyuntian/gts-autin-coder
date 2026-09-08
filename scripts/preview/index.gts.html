@@ -16,7 +16,7 @@
     <script src="./public/library/vue3-sfc-loader.js"></script>
     <link rel="stylesheet" href="./public/library/element-plus.index.css">
 
-    <!-- ═══ 2. GTS 主题（样式文件即交付件，位于 src/styles/）═══ -->
+    <!-- ═══ 2. GTS 主题（样式文件即交付件，位于 src/assets/themes/）═══ -->
     <link rel="stylesheet" href="./src/assets/themes/base.css">
     <link rel="stylesheet" href="./src/assets/themes/gts-bridge.css">
     <link rel="stylesheet" href="./src/assets/themes/gts-default.css">
@@ -41,8 +41,8 @@
             font-family: Consolas, monospace;
             white-space: pre-wrap;
             color: var(--gts-color-danger, #e02128);
-            background: #fee7e8;
-            border: 0.1rem solid #f59297;
+            background: var(--gts-bg-overlay, #fee7e8);
+            border: 0.1rem solid var(--gts-border-1, #f59297);
             border-radius: 0.8rem;
         }
     </style>

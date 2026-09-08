@@ -136,7 +136,7 @@ for (const p of ['App.vue', 'main.js', join('assets', 'themes', 'base.css'), joi
 }
 
 const vueFiles = walkFiles(srcDir, ['.vue']);
-const jsFiles = walkFiles(srcDir, ['.js', '.mjs']).filter((f) => !f.endsWith('.mjs'));
+const jsFiles = walkFiles(srcDir, ['.js']);
 const cssFiles = walkFiles(srcDir, ['.css', '.less']);
 if (vueFiles.length === 0) fail('no .vue files under src/');
 const pageIndexes = vueFiles.filter((f) => /[\\/]views[\\/][^\\/]+[\\/]index\.vue$/.test(f));

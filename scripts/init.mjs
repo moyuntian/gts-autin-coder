@@ -12,15 +12,15 @@
 //   │   ├── README.md               # 接入说明
 //   │   ├── views/{kebab}/          # 页面主目录
 //   │   │   ├── index.vue           # 页面主组件（交付入口）
-//   │   │   ├── components/          # 页面私有子组件
+//   │   │   ├── components/          # 页面私有子组件（按需创建）
 //   │   │   ├── js/constants.js     # 常量定义
 //   │   │   └── mock/home.js        # Mock 数据 + API 模拟
-//   │   ├── components/             # 跨页共享组件
+//   │   ├── components/             # 跨页共享组件（按需创建）
 //   │   ├── router/index.js         # 路由配置
 //   │   └── assets/
 //   │       ├── fonts/              # HarmonyOS Sans（FIXED）
-//   │       ├── images/             # SVG 图标素材
-//   │       ├── uploads/            # 用户提供的图片素材
+//   │       ├── images/             # SVG 图标素材（按需创建）
+//   │       ├── uploads/            # 用户提供的图片素材（按需创建）
 //   │       ├── style/              # Less 样式（base.less + theme/dark.less）
 //   │       └── themes/             # GTS 主题体系（FIXED）
 //   │           ├── base.css / gts-bridge.css / gts-default.css
@@ -81,7 +81,7 @@ if (!/^[a-z0-9]+(-[a-z0-9]+){1,5}$/.test(slug)) {
 
 // ---------- 1. resolve template ----------
 const preview = resolve(__dirname, 'preview');
-const scaffoldSrc = join(preview, 'src');          // main.js + assets/{fonts,themes,style,images} + components/ + router/
+const scaffoldSrc = join(preview, 'src');          // main.js + assets/{fonts,themes,style} + router/
 const libSrc = join(preview, 'public', 'library'); // preview-only UMD runtime
 const htmlSrc = join(preview, 'index.gts.html');
 for (const p of [scaffoldSrc, libSrc, htmlSrc]) {
@@ -114,7 +114,6 @@ writeFileSync(
   `<script setup>
 // ${pageName} — 页面主组件（交付入口；真实工程中由路由挂载）
 import { ref, onMounted } from 'vue'
-import { ElMessage } from 'element-plus'
 import { Monitor } from '@element-plus/icons-vue'
 import { fetchList } from './mock/home.js'
 import { PAGE_TITLE, STATUS_MAP } from './js/constants.js'
