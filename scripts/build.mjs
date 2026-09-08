@@ -274,7 +274,7 @@ for (const file of vueFiles) {
     if (/data-gts-theme/.test(block.content)) fail(`${rel}: <style> #${i + 1} must not touch [data-gts-theme] (skins live in src/assets/themes/)`);
     for (const dm of block.content.matchAll(/--gts-[a-z0-9-]+\s*:/g)) {
       const tok = dm[0].replace(/\s*:/, '');
-      if (!tok.startsWith('--gts-page-')) fail(`${rel}: <style> #${i + 1} defines "${tok}" : page-local custom props must be prefixed --gts-page- (skin tokens belong in styles/themes/)`);
+      if (!tok.startsWith('--page-')) fail(`${rel}: <style> #${i + 1} defines "${tok}" : page-local custom props must be prefixed --page- (skin tokens belong in styles/themes/)`);
     }
     // px usage warning (prefer rem: px / 10 = rem)
     const pxCount = (block.content.match(/\b\d+px\b/g) || []).length;
@@ -332,7 +332,7 @@ for (const file of vueFiles) {
   const rel = '/' + file.slice(srcDir.length).split('\\').join('/').replace(/^\/+/, '');
   const { descriptor } = sfc.parse(source, { filename: file });
   for (const block of descriptor.styles) {
-    for (const m of block.content.matchAll(/--gts-page-[a-z0-9-]+\s*:/g)) definedTokens.add(m[0].replace(/\s*:/, ''));
+    for (const m of block.content.matchAll(/--page-[a-z0-9-]+\s*:/g)) definedTokens.add(m[0].replace(/\s*:/, ''));
     cssHaystacks.push(block.content);
     const hexes = (block.content.match(/#[0-9a-fA-F]{3,8}\b/g) || []).length;
     if (hexes) warn(`${rel}: ${hexes} hardcoded hex color(s) in <style> : prefer var(--gts-*) tokens`);

@@ -42,12 +42,12 @@ Your product is **真实 Vue 源码**：一组 `.vue` SFC 文件（`<script setu
 │   │   │   └── use-*.js        # composable（use-table-data.js / use-dialog.js 等）
 │   │   ├── mock/*.js           # Mock API 请求模拟
 │   │   └── locale/             # i18n（zh.js / en.js）
-│   ├── components/             # 跨页共享组件（{kebab}/index.vue）
+│   ├── components/             # 跨页共享组件（{PascalCase}.vue，按需创建）
 │   ├── router/index.js         # 路由配置（真实工程使用）
 │   └── assets/
 │       ├── fonts/              # HarmonyOS Sans（FIXED）
-│       ├── images/             # SVG 图标素材（import 引用）
-│       ├── uploads/            # 用户提供的图片素材
+│       ├── images/             # SVG 图标素材（按需创建）
+│       ├── uploads/            # 用户提供的图片素材（按需创建）
 │       ├── style/base.less     # Less 变量 + 混入（FIXED）
 │       ├── style/theme/dark.less # 深色主题覆盖（FIXED）
 │       └── themes/             # GTS token 体系（FIXED — 换肤 css 只进此插槽）
@@ -58,16 +58,16 @@ Your product is **真实 Vue 源码**：一组 `.vue` SFC 文件（`<script setu
 ```
 
 **Editable vs FIXED:**
-- **You edit ONLY:** `views/**`、`components/**`、`router/index.js`、`assets/uploads/` 放素材、`assets/images/` 放 SVG。
+- **You edit ONLY:** `views/**`、`components/**`、`router/index.js`、`assets/uploads/`（按需创建放素材）、`assets/images/`（按需创建放 SVG）。
 - **FIXED:** `main.js`、`App.vue`（默认生成好）、`assets/themes/`、`assets/style/`、`public/`、`index.gts.html`、`preview-data.js`。
 
 **HARD RULES（src/ 内代码约束）:**
-- 标准 ESM：`import { ref } from 'vue'`、`import { ElMessage } from 'element-plus'`、`import { Search } from '@element-plus/icons-vue'`、`import dayjs from 'dayjs'`、`import { useRouter } from 'vue-router'`。**裸依赖白名单仅此六项**（+ element-plus 子路径）。
+- 标准 ESM：`import { ref } from 'vue'`、`import { ElMessage } from 'element-plus'`、`import { Search } from '@element-plus/icons-vue'`、`import dayjs from 'dayjs'`、`import { useRouter } from 'vue-router'`。**裸依赖白名单仅此五项**（+ element-plus 子路径）。（`less` 仅构建工具，非运行时依赖）
 - 组件用 `<script setup>` + Composition API；相对路径 import 子组件 `import StatusTag from './components/StatusTag.vue'`。
 - 颜色一律 `var(--gts-*)` token；Element Plus 组件用语义 `type` prop。
 - `<style lang="less" scoped>`，类名按组件功能命名（简短，如 `.header`、`.kpi-card`、`.filter-bar`），嵌套在根类下避免冲突；**禁止内联 `style="..."`**（动态绑定 `:style` 允许，仅限需变量计算的场景）。
 - **CSS 单位用 rem**（`px / 10 = rem`：`16px → 1.6rem`、`24px → 2.4rem`、`8px → 0.8rem`）。px 仅在 build 时产生 WARN。
-- 禁止在 SFC 样式里定义 `:root`、`[data-gts-theme]`、`--gts-*`（页面局部变量用 `--gts-page-*` 前缀）。
+- 禁止在 SFC 样式里定义 `:root`、`[data-gts-theme]`、`--gts-*`（页面局部变量用 `--page-*` 前缀）。
 - 图片素材：`import logo from '../../assets/uploads/logo.png'` 或 `import icon from '../../assets/images/ran.svg'`。
 
 ## 换肤系统
@@ -126,7 +126,7 @@ Your product is **真实 Vue 源码**：一组 `.vue` SFC 文件（`<script setu
 2. **图标名 / el-\* 组件名 / token 名**精确匹配（见「附录 A 速查表」）
 3. **PascalCase / kebab-case 组件标签**都有对应 import
 4. **`<style lang="less">` 内**无 `:root` / `[data-gts-theme]` / `--gts-*:` 定义
-5. **裸 import** 仅限白名单六项
+5. **裸 import** 仅限白名单五项
 6. **`v-for` 有 `:key`**；`v-if` 不与 `v-for` 同标签
 7. **无静态内联 `style="..."`**（`:style` 动态绑定允许）
 8. **CSS 单位用 rem**（`px / 10 = rem`）
@@ -182,7 +182,7 @@ node scripts/build.mjs --dir "{artifact-folder}/{slug}"
    │   └── mock/home.js                       ← Mock API
    ├── assets/uploads/logo.png               ← 素材
    ├── assets/images/ran.svg                 ← SVG 图标
-   └── components/shared-card/index.vue       ← 跨页共享组件
+   └── components/SharedCard.vue              ← 跨页共享组件
 
    从 index.vue 引用:
      子组件:    import StatusTag from './components/StatusTag.vue'
@@ -190,7 +190,7 @@ node scripts/build.mjs --dir "{artifact-folder}/{slug}"
      Mock API:  import { fetchList } from './mock/home.js'
      素材:      import logo from '../../assets/uploads/logo.png'
      SVG 图标:  import ranIcon from '../../assets/images/ran.svg'
-     跨页组件:  import SharedCard from '../../components/shared-card/index.vue'
+     跨页组件:  import SharedCard from '../../components/SharedCard.vue'
 
    从 components/StatusTag.vue 引用:
      素材:      import logo from '../../../assets/uploads/logo.png'
