@@ -56,7 +56,8 @@
 | `--gts-font-family` | 字体栈（默认 HarmonyOS Sans） |
 
 **使用规则：**
-- 页面模板内联 style、页面样式区（`<style data-gts-page>`）、JS 动态样式 — 一律 `var(--gts-*)`。
+- 页面样式区（`<style lang="less" scoped>`）、JS 动态样式（`:style`）— 一律 `var(--gts-*)`。
+- **禁止静态内联 `style="..."`**；`:style` 动态绑定仅限需变量计算的场景。
 - Element Plus 组件优先语义 prop（`type="primary|success|warning|danger|info"`、`effect`、`status`），组件内部色自动走桥接。
 - 用户明确指定精确颜色时才允许 hex 字面量，并加注释说明。
 - Element Plus 的 `light-N` 色阶由桥接层 `color-mix` 自动派生，页面代码不要自己算浅色。
@@ -76,12 +77,32 @@
 ## 3. 布局规范
 
 - **B 端控制台页：** `el-container` 外壳 — `el-aside`（`el-menu` 侧导航，可折叠）+ `el-container`（`el-header` 顶栏 + `el-main` 内容）。顶栏含面包屑/标题 + 操作区。
-- **内容页：** 单栏，根容器 `gts-page-root`（padding 20-24px，`max-width: 1280px` 居中）。
+- **内容页：** 单栏，根容器（如 `.page-root`，padding 2-2.4rem，`max-width: 128rem` 居中）。
 - **看板页：** 顶部 KPI 卡行（`el-row`/`el-col` 或 grid，等高），下方 2/3 + 1/3 图表区。
 - **列表页标配：** 标题行（标题 + 主操作按钮）→ 筛选行（`el-input` 搜索 + `el-select` 筛选 + 计数）→ `el-table` → `el-pagination` 右对齐。
 - **卡片：** 信息聚合容器，用 `--gts-bg-container` 底 + `--gts-shadow-1`/描边 + `--gts-radius-lg`。
-- **间距：** 4 的倍数 px；区块间 16-24px，组件内 8-12px。
+- **间距：** 4 的倍数 rem（根字体 10px，`px / 10 = rem`）；区块间 1.6-2.4rem，组件内 0.8-1.2rem。
 - **响应式：** 预览以桌面为主（≥1200px），但栅格用 `el-col` 的 `:xs/:sm/:md/:lg` 保证窄屏不破版。
+
+### rem 换算速查
+
+| px | rem | 用途 |
+|----|-----|------|
+| 4px | 0.4rem | 最小间距 |
+| 8px | 0.8rem | 组件内间距 |
+| 12px | 1.2rem | 小间距/图标 |
+| 16px | 1.6rem | 区块间距 |
+| 20px | 2rem | 页面内边距 |
+| 24px | 2.4rem | 大区块间距 |
+| 56px | 5.6rem | 顶栏/侧栏高度 |
+| 100px | 10rem | 组件宽度 |
+
+### Less 样式规范
+
+- `<style lang="less" scoped>` — Less 嵌套、变量（`@var`）、混入可用
+- **SFC 内不 `@import` 外部 .less**（预览兼容性）；Less 变量定义在 SFC 内或 `assets/style/base.less`
+- 嵌套 ≤ 3 层，避免选择器特异性问题
+- 类名按组件功能命名（简短，如 `.header`、`.kpi-card`、`.filter-bar`），嵌套在根类下避免冲突；BEM 或小写连字符均可
 
 ## 4. Element Plus 组件要点
 
@@ -110,3 +131,6 @@ API 以 Element Plus 2.x 为准。常见场景与 Don'ts：
 - script setup 里声明的变量忘 return？— 不存在这个问题（`<script setup>` 自动暴露），但**别用 Options API 混写** `setup()` + `data()`。
 - 图片路径写死相对字符串 — 应 `import img from '../../assets/uploads/x.png'`（预览与工程语义一致）。
 - 把业务组件注册到全局 — 交付件里组件一律显式 import。
+- 静态内联 `style="..."` — 禁止；改用 class + `<style lang="less">`。
+- px 单位 — 改用 rem（`px / 10 = rem`）。
+- Less 嵌套过深（> 3 层）— 影响可维护性和选择器特异性。

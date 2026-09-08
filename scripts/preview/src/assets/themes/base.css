@@ -35,15 +35,18 @@
   /* 字体栈（皮肤可通过 --gts-font-family 覆盖） */
   --gts-font-family: 'HarmonyOS Sans', 'Microsoft YaHei', 'PingFang SC', Arial, sans-serif;
 
+  /* rem 基准：10px — px / 10 = rem（100px = 10rem, 16px = 1.6rem） */
+  font-size: 10px;
+
   /* 派生混色基色：桥接层用 color-mix 生成 Element Plus light-N 色阶时的混合底色。
      亮色皮肤保持默认白色；深色皮肤在皮肤文件里覆盖为深色表面色。 */
   --gts-mix-base: #ffffff;
 
   /* 圆角（皮肤可覆盖） */
-  --gts-radius-sm: 4px;
-  --gts-radius-md: 6px;
-  --gts-radius-lg: 8px;
-  --gts-radius-full: 9999px;
+  --gts-radius-sm: 0.4rem;
+  --gts-radius-md: 0.6rem;
+  --gts-radius-lg: 0.8rem;
+  --gts-radius-full: 9999rem;
 }
 
 /* 页面骨架 */

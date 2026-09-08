@@ -7,10 +7,12 @@
 
     <!-- ═══ 1. 本地运行时（FIXED — 勿改勿删勿换 CDN）═══ -->
     <script src="./public/library/vue.global.prod.js"></script>
+    <script src="./public/library/vue-router.global.prod.js"></script>
     <script src="./public/library/dayjs.min.js"></script>
     <script src="./public/library/element-plus.full.min.js"></script>
     <script src="./public/library/element-plus-icons-vue.iife.min.js"></script>
     <script src="./public/library/element-plus-locale-zh-cn.min.js"></script>
+    <script src="./public/library/less.min.js"></script>
     <script src="./public/library/vue3-sfc-loader.js"></script>
     <link rel="stylesheet" href="./public/library/element-plus.index.css">
 
@@ -23,6 +25,7 @@
 
     <!-- ═══ 3. 页面骨架样式（FIXED）═══ -->
     <style>
+        html { font-size: 10px; }
         html, body, #app { height: 100%; margin: 0; padding: 0; }
         body {
             font-family: var(--gts-font-family);
@@ -31,16 +34,16 @@
         }
         #gts-boot-error {
             display: none;
-            margin: 24px auto;
-            max-width: 720px;
-            padding: 12px 16px;
-            font-size: 13px;
+            margin: 2.4rem auto;
+            max-width: 72rem;
+            padding: 1.2rem 1.6rem;
+            font-size: 1.3rem;
             font-family: Consolas, monospace;
             white-space: pre-wrap;
             color: var(--gts-color-danger, #e02128);
             background: #fee7e8;
-            border: 1px solid #f59297;
-            border-radius: 8px;
+            border: 0.1rem solid #f59297;
+            border-radius: 0.8rem;
         }
     </style>
 </head>
@@ -82,9 +85,11 @@
             var options = {
                 moduleCache: Object.assign(Object.create(null), {
                     vue: Vue,
+                    "vue-router": VueRouter,
                     "element-plus": ElementPlus,
                     "@element-plus/icons-vue": ElementPlusIconsVue,
                     dayjs: dayjs,
+                    less: less,
                 }),
                 getFile: function (path) {
                     var clean = String(path).split("?")[0].split("#")[0];
@@ -108,6 +113,15 @@
                 handleModule: function (type, getContentData, path) {
                     if (type === ".css") {
                         return Promise.resolve(getContentData()).then(addStyle).then(function () { return {}; });
+                    }
+                    if (type === ".less") {
+                        // Less → CSS 编译（less.js 已在页面加载）
+                        return Promise.resolve(getContentData()).then(function (text) {
+                            return window.less.render(String(text).replace(/^\uFEFF/, ""));
+                        }).then(function (result) {
+                            addStyle(result.css);
+                            return {};
+                        });
                     }
                     if (type === ".json") {
                         // ESM 语义：default import 拿到解析后的对象（剥 BOM —— Windows 编辑器常带）

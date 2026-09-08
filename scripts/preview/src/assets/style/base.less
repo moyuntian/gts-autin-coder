@@ -1,0 +1,46 @@
+// ============================================================
+// base.less — 项目基础样式层（Less）
+// 包含：Less 变量、混入、通用工具类
+// 颜色仍走 GTS token（var(--gts-*)），此处只做结构性样式
+// ============================================================
+
+// ---- Less 变量 ----
+@spacing-xs: 0.4rem;   // 4px
+@spacing-sm: 0.8rem;   // 8px
+@spacing-md: 1.2rem;   // 12px
+@spacing-lg: 1.6rem;   // 16px
+@spacing-xl: 2.4rem;   // 24px
+
+@font-size-xs: 1.2rem;  // 12px
+@font-size-sm: 1.3rem;  // 13px
+@font-size-base: 1.4rem; // 14px
+@font-size-lg: 1.6rem;   // 16px
+@font-size-xl: 2.8rem;   // 28px
+
+@radius-sm: var(--gts-radius-sm);
+@radius-md: var(--gts-radius-md);
+@radius-lg: var(--gts-radius-lg);
+
+// ---- Less 混入 ----
+.flex-center() {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.flex-between() {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.ellipsis() {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+// ---- 通用工具类 ----
+.gts-text-ellipsis {
+  .ellipsis();
+}

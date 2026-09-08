@@ -81,9 +81,11 @@ const EP_ICONS = new Set(
 );
 const ALLOWED_BARE = new Set([
   'vue',
+  'vue-router',
   'element-plus',
   '@element-plus/icons-vue',
   'dayjs',
+  'less',
 ]);
 
 // ---------- real compiler ----------
@@ -116,8 +118,10 @@ if (!existsSync(srcDir)) fail(`src folder not found: ${srcDir}`);
 const html = readFileSync(htmlPath, 'utf8');
 const REQUIRED_HTML = [
   '<script src="./public/library/vue.global.prod.js"></script>',
+  '<script src="./public/library/vue-router.global.prod.js"></script>',
   '<script src="./public/library/element-plus.full.min.js"></script>',
   '<script src="./public/library/vue3-sfc-loader.js"></script>',
+  '<script src="./public/library/less.min.js"></script>',
   '<link rel="stylesheet" href="./src/assets/themes/base.css">',
   '<link rel="stylesheet" href="./src/assets/themes/gts-bridge.css">',
   '<script src="./preview-data.js"></script>',
@@ -133,10 +137,10 @@ for (const p of ['App.vue', 'main.js', join('assets', 'themes', 'base.css'), joi
 
 const vueFiles = walkFiles(srcDir, ['.vue']);
 const jsFiles = walkFiles(srcDir, ['.js', '.mjs']).filter((f) => !f.endsWith('.mjs'));
-const cssFiles = walkFiles(srcDir, ['.css']);
+const cssFiles = walkFiles(srcDir, ['.css', '.less']);
 if (vueFiles.length === 0) fail('no .vue files under src/');
-const pageIndexes = vueFiles.filter((f) => /[\\/]pages[\\/][^\\/]+[\\/]index\.vue$/.test(f));
-if (pageIndexes.length === 0) fail('no page entry found (expected src/pages/{Name}/index.vue)');
+const pageIndexes = vueFiles.filter((f) => /[\\/]views[\\/][^\\/]+[\\/]index\.vue$/.test(f));
+if (pageIndexes.length === 0) fail('no page entry found (expected src/views/{kebab}/index.vue)');
 
 // file map for relative import resolution (posix keys from src root)
 const fileMap = new Set();
@@ -254,6 +258,16 @@ for (const file of vueFiles) {
     fail(`${rel}: unknown component tag <${tag}> — no matching import found`);
   }
 
+  // inline style check: warn on style="..." (not :style="..." which is dynamic binding)
+  const inlineStyles = (tplContent.match(/\sstyle\s*=\s*"/g) || []).length;
+  if (inlineStyles) {
+    // Check if any are dynamic (:style) vs static (style="")
+    const staticStyles = (tplContent.match(/\sstyle\s*=\s*"/g) || []).length;
+    const dynamicStyles = (tplContent.match(/:\s*style\s*=\s*"/g) || []).length;
+    const pureStatic = staticStyles - dynamicStyles;
+    if (pureStatic > 0) warn(`${rel}: ${pureStatic} static inline style(s) — prefer <style> classes; only :style (dynamic binding) is allowed`);
+  }
+
   // style blocks
   for (const [i, block] of descriptor.styles.entries()) {
     if (/:root\s*\{/.test(block.content)) fail(`${rel}: <style> #${i + 1} must not define :root (skins live in src/assets/themes/)`);
@@ -262,6 +276,9 @@ for (const file of vueFiles) {
       const tok = dm[0].replace(/\s*:/, '');
       if (!tok.startsWith('--gts-page-')) fail(`${rel}: <style> #${i + 1} defines "${tok}" : page-local custom props must be prefixed --gts-page- (skin tokens belong in styles/themes/)`);
     }
+    // px usage warning (prefer rem: px / 10 = rem)
+    const pxCount = (block.content.match(/\b\d+px\b/g) || []).length;
+    if (pxCount) warn(`${rel}: <style> #${i + 1} uses ${pxCount} px value(s) — prefer rem (px / 10 = rem, root font-size is 10px)`);
   }
 }
 

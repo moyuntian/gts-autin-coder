@@ -1,0 +1,31 @@
+// ============================================================
+// dark.less — 深色主题变量覆盖
+// 在 html[data-gts-theme="dark"] 作用域下覆盖 GTS token
+// ============================================================
+
+html[data-gts-theme="dark"] {
+  // 覆盖混色基色（EP light-N 色阶混合底色改为深色表面）
+  --gts-mix-base: #1d1d1d;
+
+  // 文本色
+  --gts-text-1: #e5e5e5;
+  --gts-text-2: #b0b0b0;
+  --gts-text-3: #888888;
+  --gts-text-4: #666666;
+
+  // 背景色
+  --gts-bg-page: #1a1a1a;
+  --gts-bg-container: #2d2d2d;
+  --gts-bg-overlay: #383838;
+  --gts-bg-hover: #383838;
+  --gts-bg-fill: #404040;
+
+  // 边框
+  --gts-border-1: #3a3a3a;
+  --gts-border-2: #4a4a4a;
+
+  // 阴影
+  --gts-shadow-1: 0 0.2rem 0.8rem rgba(0, 0, 0, 0.4);
+  --gts-shadow-2: 0 0.4rem 1.6rem rgba(0, 0, 0, 0.5);
+  --gts-shadow-3: 0 0.8rem 3.2rem rgba(0, 0, 0, 0.6);
+}
