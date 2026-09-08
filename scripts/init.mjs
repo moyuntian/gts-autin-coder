@@ -8,7 +8,7 @@
 //   {slug}/
 //   ├── src/                        ← 交付件（真实工程结构，直接可拷贝）
 //   │   ├── main.js                 # 工程入口示例
-//   │   ├── App.vue                 # 应用壳（导入目标页面组件）
+//   │   ├── App.vue                 # 应用壳：路由出口（<RouterView />）
 //   │   ├── README.md               # 接入说明
 //   │   ├── views/{kebab}/          # 页面主目录
 //   │   │   ├── index.vue           # 页面主组件（交付入口）
@@ -46,6 +46,8 @@ import {
   rmSync,
   cpSync,
   writeFileSync,
+  readdirSync,
+  rmdirSync,
 } from 'fs';
 import { join, resolve, dirname } from 'path';
 import { fileURLToPath } from 'url';
@@ -100,11 +102,9 @@ if (existsSync(join(dest, 'src'))) {
 mkdirSync(dest, { recursive: true });
 
 // ---------- 4. copy deliverable scaffold ----------
-// scaffold src 自带 assets/{fonts,themes,style,images,uploads} + main.js + README.md + components/ + router/
+// scaffold src 自带 assets/{fonts,themes,style} + main.js + README.md + router/
 const srcDir = join(dest, 'src');
 cpSync(scaffoldSrc, srcDir, { recursive: true });
-mkdirSync(join(srcDir, 'assets', 'uploads'), { recursive: true });
-mkdirSync(join(srcDir, 'views', slug, 'components'), { recursive: true });
 mkdirSync(join(srcDir, 'views', slug, 'js'), { recursive: true });
 mkdirSync(join(srcDir, 'views', slug, 'mock'), { recursive: true });
 
@@ -250,15 +250,16 @@ export function fetchDetail(id) {
 // ---------- 5c. router/index.js (update with page route) ----------
 writeFileSync(
   join(srcDir, 'router', 'index.js'),
-  `import { createRouter, createWebHistory } from 'vue-router'
+  `import { createRouter, createWebHashHistory } from 'vue-router'
 import ${pageName} from '../views/${slug}/index.vue'
 
+// createWebHashHistory 兼容 file:// 离线预览；真实工程可改 createWebHistory()
 const routes = [
   { path: '/', name: '${slug}', component: ${pageName} },
 ]
 
 const router = createRouter({
-  history: createWebHistory(),
+  history: createWebHashHistory(),
   routes,
 })
 
@@ -271,12 +272,12 @@ export default router
 writeFileSync(
   join(srcDir, 'App.vue'),
   `<script setup>
-// 应用壳：导入目标页面组件（预览直接渲染；真实工程由路由挂载）
-import Page from './views/${slug}/index.vue'
+// 应用壳：路由出口（真实工程由 router 挂载页面组件，预览同样走 router）
+import { RouterView } from 'vue-router'
 </script>
 
 <template>
-  <Page />
+  <RouterView />
 </template>
 `,
   'utf8',
@@ -289,6 +290,23 @@ cpSync(htmlSrc, join(dest, 'index.gts.html'));
 // ---------- 8. generate preview-data.js ----------
 const result = refresh(dest);
 if (!result.ok) fail(result.reason);
+
+// ---------- 8a. remove empty directories ----------
+function removeEmptyDirs(dir) {
+  let removed = false;
+  for (const entry of readdirSync(dir, { withFileTypes: true })) {
+    if (entry.isDirectory()) {
+      const full = join(dir, entry.name);
+      if (removeEmptyDirs(full)) removed = true;
+    }
+  }
+  if (readdirSync(dir).length === 0) {
+    rmdirSync(dir);
+    return true;
+  }
+  return removed;
+}
+removeEmptyDirs(dest);
 
 // ---------- 9. done ----------
 console.log('RESULT: OK');

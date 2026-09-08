@@ -7,7 +7,7 @@
 ```
 src/
 ├── main.js        # 工程入口示例（预览不执行；接入时参考或直接使用）
-├── App.vue        # 应用壳：挂载目标页面组件
+├── App.vue        # 应用壳：路由出口（<RouterView />）
 ├── pages/         # 页面（每个页面一个文件夹，index.vue 为入口）
 │   └── XxxYyy/
 │       ├── index.vue

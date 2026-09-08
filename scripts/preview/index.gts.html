@@ -156,7 +156,17 @@
                 template: "<GtsRoot />",
             });
             app.use(ElementPlus, { locale: ElementPlusLocaleZhCn });
-            app.mount("#app");
+
+            // 加载路由模块并安装（App.vue 使用 <RouterView />，需 router 提供）
+            window["vue3-sfc-loader"].loadModule("/src/router/index.js", options).then(
+                function (routerMod) {
+                    app.use(routerMod.default);
+                    app.mount("#app");
+                },
+                function (err) {
+                    showBootError("路由加载失败：" + (err && err.message ? err.message : String(err)));
+                }
+            );
         })();
     </script>
 </body>
