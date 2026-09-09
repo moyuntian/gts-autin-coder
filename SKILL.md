@@ -21,44 +21,45 @@ Your product is **真实 Vue 源码**：一组 `.vue` SFC 文件（`<script setu
 
 1. **NEVER re-read** a file you have already read this session.
 2. **Design system:** `references/design_system.md` — 仅在换肤/深色模式/token场景咨询时读取（日常生成不需要，SKILL.md 已内嵌速查）。
-3. **Code patterns:** `references/code_patterns.md` — 仅首次使用或复杂场景时参考。
+3. **Code patterns:** 信任 SKILL.md 附录 B 的速查模式，无需外部参考。
 4. **Element Plus API:** 信任你的知识，标准 EP 2.x API。
 
 ## Output Contract (READ FIRST)
 
-`init.mjs` 初始化出的工作区结构（**src/ 之外全部 FIXED**）：
+`init.mjs` 初始化出的工作区结构（**init 只创建必要文件，其余按需创建**）：
 
 ```
 {slug}/
-├── src/                        # ★ 交付件 — 你编写代码的唯一区域
-│   ├── main.js                 # 真实工程入口（FIXED — 已含 Router + Less + GTS themes）
-│   ├── App.vue                 # 应用壳：导入页面组件并渲染（已按页面名生成，一般勿改）
-│   ├── README.md               # 交付件接入说明（FIXED）
-│   ├── views/{slug}/           # ★ 页面主目录
-│   │   ├── index.vue           # 页面主组件（组合层 — 只编排布局 + 引用子组件，不堆逻辑）
-│   │   ├── components/         # 页面私有子组件（按需创建，颗粒度小）
-│   │   ├── js/                 # 常量 + composable 逻辑
-│   │   │   ├── constants.js    # 常量定义（STATUS_MAP 等）
-│   │   │   └── use-*.js        # composable（use-table-data.js / use-dialog.js 等）
-│   │   ├── mock/*.js           # Mock API 请求模拟
-│   │   └── locale/             # i18n（zh.js / en.js）
-│   ├── components/             # 跨页共享组件（{PascalCase}.vue，按需创建）
-│   ├── router/index.js         # 路由配置（真实工程使用）
-│   └── assets/
-│       ├── fonts/              # HarmonyOS Sans（FIXED）
-│       ├── images/             # SVG 图标素材（按需创建）
-│       ├── uploads/            # 用户提供的图片素材（按需创建）
-│       ├── style/base.less     # Less 变量 + 混入（FIXED）
-│       ├── style/theme/dark.less # 深色主题覆盖（FIXED）
-│       └── themes/             # GTS token 体系（FIXED — 换肤 css 只进此插槽）
-│           ├── base.css / gts-bridge.css / gts-default.css
-├── public/library/             # 预览运行时 UMD（FIXED — 勿改勿删，不随工程交付）
-├── index.gts.html              # 离线预览加载器（FIXED — 唯一允许：换肤插槽追加 <link>）
-└── preview-data.js             # src/ 源码映射（build 自动重新生成，勿手改）
+├── mock/modules/{slug}.js          # Mock API（init 必建，与 src 同级）
+├── public/library/                 # 预览运行时 UMD（FIXED — 勿改勿删）
+├── src/                            # ★ 交付件
+│   ├── main.js                     # 工程入口（FIXED）
+│   ├── App.vue                     # 应用壳：路由出口（init 生成）
+│   ├── README.md                   # 接入说明（FIXED）
+│   ├── assets/                     # 主题/字体/样式（FIXED）
+│   │   ├── fonts/ style/ themes/
+│   │   ├── images/ uploads/        # 按需创建素材
+│   ├── locales/                    # 全局 i18n（init 必建）
+│   │   ├── lang/zh-CN/common.json
+│   │   ├── lang/en-US/common.json
+│   │   └── index.js
+│   ├── router/index.js             # 路由（init 必建 — 内联，无 guards/modules）
+│   ├── views/{slug}/               # ★ 页面主目录（init 必建）
+│   │   ├── index.vue               # 页面主组件
+│   │   └── js/constants.js         # 页面常量
+│   ├── components/                 # 跨页共享组件（按需创建）
+│   ├── api/                        # API 层（按需创建）
+│   ├── composables/                # composable（按需创建）
+│   ├── constants/                  # 全局常量（按需创建）
+│   ├── directives/                 # 指令（按需创建）
+│   ├── stores/                     # 状态管理（按需创建）
+│   └── utils/                      # 工具函数（按需创建）
+├── index.gts.html                  # 离线预览加载器（FIXED）
+└── preview-data.js                 # 源码映射（build 自动生成）
 ```
 
 **Editable vs FIXED:**
-- **You edit ONLY:** `views/**`、`components/**`、`router/index.js`、`assets/uploads/`（按需创建放素材）、`assets/images/`（按需创建放 SVG）。
+- **You edit ONLY:** `views/**`、`components/**`、`api/**`、`composables/**`、`constants/**`、`directives/**`、`locales/**`、`router/**`、`stores/**`、`utils/**`、`mock/**`、`assets/uploads/`、`assets/images/`。
 - **FIXED:** `main.js`、`App.vue`（默认生成好）、`assets/themes/`、`assets/style/`、`public/`、`index.gts.html`、`preview-data.js`。
 
 **HARD RULES（src/ 内代码约束）:**
@@ -116,9 +117,9 @@ Your product is **真实 Vue 源码**：一组 `.vue` SFC 文件（`<script setu
 ### Step 3 — Author .vue Files
 在 `SRC_DIR` 下编写页面（遵循「页面代码规范」）：
 1. `views/{slug}/index.vue` — 页面主组件（替换骨架内容）。**index.vue 只做组合层**：布局编排 + 子组件引用 + 事件协调；禁止把全部逻辑堆在 index.vue 中。
-2. 页面私有子组件放 `views/{slug}/components/*.vue`；跨页复用组件放 `src/components/{kebab}/index.vue`。**每个 .vue 单一职责，颗粒度小**：一个 UI 区块一个文件（如 `FilterBar.vue`、`KpiCard.vue`、`DataTable.vue`、`EditDialog.vue`），index.vue 组合它们。
-3. 常量/配置放 `views/{slug}/js/constants.js`；复杂逻辑抽 `use-xxx.js` composable（如 `use-table-data.js` 管理列表请求/分页/筛选，`use-dialog.js` 管理弹窗状态）；Mock API 放 `views/{slug}/mock/*.js`。**index.vue 的 `<script setup>` 行数控制在 ~80 行以内**，超出则拆分。
-5. **i18n:** 文本不放裸字符串，放 `views/{slug}/locale/zh.js` + `en.js`（见「i18n 模式」）。
+2. 页面私有子组件放 `views/{slug}/components/*.vue`；跨页复用组件放 `src/components/{base|business|layout}/{PascalCase}.vue`。**每个 .vue 单一职责，颗粒度小**：一个 UI 区块一个文件（如 `FilterBar.vue`、`KpiCard.vue`、`DataTable.vue`、`EditDialog.vue`），index.vue 组合它们。
+3. 常量/配置放 `views/{slug}/js/constants.js`（页面私有）；复杂逻辑抽 composable — 页面私有放 `views/{slug}/js/use-*.js`，跨页共享按需创建 `src/composables/`；Mock API 放 `mock/modules/{slug}.js`，页面直接引用。**index.vue 的 `<script setup>` 行数控制在 ~80 行以内**，超出则拆分。
+5. **i18n:** 文本不放裸字符串，在 `views/{slug}/js/` 内定义或扩展 `src/locales/`（见「i18n 模式」）。
 
 ### Step 3.5 — 生成前自检（MANDATORY，build 前必做）
 
@@ -144,6 +145,7 @@ node scripts/build.mjs --dir "{artifact-folder}/{slug}"
 ```
 <artifact type="text/link">{HTML_PATH value}</artifact>
 ```
+直接在浏览器打开 `index.gts.html` 即可预览（file:// 协议可直接加载）。
 
 ---
 
@@ -166,7 +168,7 @@ node scripts/build.mjs --dir "{artifact-folder}/{slug}"
    - 间距：4 的倍数 rem；区块间 1.6-2.4rem，组件内 0.8-1.2rem
 1. **组件写法:** `<script setup>` 优先；`defineProps`/`defineEmits` 声明组件契约。**文件颗粒度小**：一个组件一个 .vue 文件，单一职责。**index.vue 只做组合**，子组件各自封装自己的状态与逻辑。
 2. **imports 顺序:** vue → vue-router → element-plus → @element-plus/icons-vue → dayjs → 相对子组件/素材/mock/constants。
-3. **mock 数据 + Mock API:** 放 `views/{slug}/mock/*.js`，用 Promise + setTimeout 模拟异步请求（见「Mock API 模式」）。语义化 key（`deviceName` 禁止 `val1`）；主列表 ≥ 10 条状态多样。
+3. **mock 数据 + Mock API:** 放 `mock/modules/{slug}.js`（与 src 同级），页面直接 import。用 Promise + setTimeout 模拟异步请求（见「Mock API 模式」）。语义化 key（`deviceName` 禁止 `val1`）；主列表 ≥ 10 条状态多样。
 4. **常量:** 放 `views/{slug}/js/constants.js`，全大写+下划线命名（`ALARM_LEVEL`、`STATUS_MAP`）。
 5. **图标:** `import { Search, Plus } from '@element-plus/icons-vue'`；用法 `<el-icon :size="20"><Search /></el-icon>` 或 `:icon="Search"`。
 6. **反馈:** 轻提示 `ElMessage`；危险操作 `ElMessageBox.confirm(..., { type: 'warning' })`；表格 `v-loading`；空态 `el-empty`。
@@ -174,20 +176,23 @@ node scripts/build.mjs --dir "{artifact-folder}/{slug}"
 8. **表格:** `el-table` + `el-table-column`；自定义列 `<template #default="{ row }">`；操作列 `fixed="right"` ≤3 个按钮（多了收进 `el-dropdown`）；≥8 条数据配 `el-pagination`。
 9. **相对路径计算（最易错项）:**
    ```
-   src/
-   ├── views/device-management/
-   │   ├── index.vue                          ← 页面主组件
-   │   ├── components/StatusTag.vue           ← 子组件
-   │   ├── js/constants.js                    ← 常量
-   │   └── mock/home.js                       ← Mock API
-   ├── assets/uploads/logo.png               ← 素材
-   ├── assets/images/ran.svg                 ← SVG 图标
-   └── components/SharedCard.vue              ← 跨页共享组件
+   {slug}/
+   ├── mock/
+   │   └── modules/{slug}.js                  ← Mock API
+   ├── src/
+   │   ├── components/
+   │   │   └── SharedCard.vue                 ← 跨页共享组件（按需创建）
+   │   ├── assets/uploads/logo.png            ← 素材
+   │   ├── assets/images/ran.svg              ← SVG 图标
+   │   └── views/{slug}/
+   │       ├── index.vue                      ← 页面主组件
+   │       ├── components/StatusTag.vue       ← 子组件（按需创建）
+   │       └── js/constants.js               ← 常量
 
    从 index.vue 引用:
      子组件:    import StatusTag from './components/StatusTag.vue'
      常量:      import { STATUS_MAP } from './js/constants.js'
-     Mock API:  import { fetchList } from './mock/home.js'
+     Mock API:  import { fetchList } from '../../../mock/modules/{slug}.js'
      素材:      import logo from '../../assets/uploads/logo.png'
      SVG 图标:  import ranIcon from '../../assets/images/ran.svg'
      跨页组件:  import SharedCard from '../../components/SharedCard.vue'
@@ -198,71 +203,19 @@ node scripts/build.mjs --dir "{artifact-folder}/{slug}"
 
 ---
 
-## Mock API 模式（异步请求模拟）
+## Mock API 模式
 
+init.mjs 已生成 `mock/modules/{slug}.js`（与 src 同级，Promise + setTimeout 模拟）。页面直接引用：
 ```js
-// views/{slug}/mock/home.js
-const mockData = [
-  { id: 1, name: '设备-01', status: 'running' },
-  // ... ≥ 10 条
-]
-
-export function fetchList(params = {}) {
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      let result = mockData
-      if (params.keyword) result = result.filter(i => i.name.includes(params.keyword))
-      resolve({ data: result, total: result.length })
-    }, 300)
-  })
-}
-
-export function fetchDetail(id) {
-  return new Promise((resolve) => {
-    setTimeout(() => resolve({ data: mockData.find(i => i.id === id) }), 200)
-  })
-}
+import { fetchList } from '../../../mock/modules/{slug}.js'
 ```
 
-页面调用：
+## i18n 模式
+
+init.mjs 已生成 `src/locales/lang/zh-CN/common.json` + `en-US/common.json`。页面 i18n 按需在 `views/{slug}/js/` 内定义或扩展 locales：
 ```js
-import { fetchList } from './mock/home.js'
-const loading = ref(false)
-const dataList = ref([])
-
-async function fetchData() {
-  loading.value = true
-  try {
-    const res = await fetchList(query)
-    dataList.value = res.data
-  } finally {
-    loading.value = false
-  }
-}
-onMounted(() => fetchData())
-```
-
-## i18n 模式（国际化文件规范）
-
-```
-views/{slug}/locale/
-├── zh.js    # 中文
-└── en.js    # 英文
-```
-
-```js
-// views/{slug}/locale/zh.js
-export default {
-  title: '设备管理',
-  addDevice: '新增设备',
-  confirmDelete: '确定删除此设备吗？',
-}
-```
-
-```js
-// 页面中使用
-import zh from './locale/zh.js'
-const t = zh  // 简单对象引用（真实工程可用 vue-i18n）
+// 简单引用方式
+const t = { title: '${pageName}', refresh: '刷新' }
 // 模板: {{ t.title }}
 ```
 
@@ -296,32 +249,21 @@ const t = zh  // 简单对象引用（真实工程可用 vue-i18n）
 | 11 | `v-if` 和 `v-for` 同标签 | 分开到不同标签 | 编译错误 |
 | 12 | `src="/assets/uploads/x.png"` | `import img from '../../assets/uploads/x.png'` | 预览无法解析裸路径 |
 
-### 常用图标（import from '@element-plus/icons-vue'，大小写敏感）
+### 常用图标（import from '@element-plus/icons-vue'，大小写敏感，build 校验 293 白名单）
 
 ```
-Search  Plus  Edit  Delete  View  Download  Upload  Refresh  Setting  User
-Lock  Check  Close  Warning  InfoFilled  SuccessFilled  CircleClose
-ArrowDown  ArrowUp  ArrowLeft  ArrowRight  Monitor  DataAnalysis  DataBoard
-Grid  Menu  Operation  Tools  More  MoreFilled  Filter  Sort  FullScreen
-Document  Folder  Calendar  Clock  Timer  Message  Bell  Star  StarFilled
-ZoomIn  ZoomOut  Expand  Fold  Promotion  Notification  Collection
-TrendCharts  Tickets  Rank  Aim  Position  Pointer  ChatDotRound  ChatLineRound
+Search  Plus  Edit  Delete  View  Refresh  Setting  User  Lock  Check
+Close  Warning  InfoFilled  ArrowDown  ArrowUp  ArrowLeft  ArrowRight
+Monitor  Filter  More  Calendar  Bell  Download  Upload
 ```
 
-### 常用 el-\* 组件（121 个白名单中最常用的）
+### 常用 el-\* 组件（build 校验 121 白名单，以下最高频）
 
 ```
 el-button  el-input  el-select  el-option  el-table  el-table-column
 el-pagination  el-form  el-form-item  el-dialog  el-drawer  el-tag
-el-icon  el-menu  el-menu-item  el-container  el-header  el-aside  el-main
+el-icon  el-menu  el-container  el-header  el-aside  el-main
 el-row  el-col  el-card  el-tabs  el-tab-pane  el-tooltip  el-dropdown
-el-dropdown-menu  el-dropdown-item  el-date-picker  el-input-number
-el-switch  el-radio  el-radio-group  el-checkbox  el-checkbox-group
-el-empty  el-divider  el-avatar  el-badge  el-alert  el-progress
-el-breadcrumb  el-breadcrumb-item  el-steps  el-step  el-collapse
-el-collapse-item  el-tree  el-cascader  el-upload  el-slider  el-rate
-el-backtop  el-scrollbar  el-skeleton  el-result  el-descriptions
-el-statistic  el-watermark
 ```
 
 ### Token 速查（var(--gts-\*)，使用不在本表中的 token = build 拦截）
@@ -335,116 +277,12 @@ el-statistic  el-watermark
 其他:   --gts-mask  --gts-shadow-1  -2  -3  --gts-radius-sm  -md  -lg  -full  --gts-font-family
 ```
 
-### element-plus 服务类导出（import from 'element-plus'）
+### rem 换算（根字体 10px）
 
-```
-ElMessage  ElMessageBox  ElNotification  ElLoading  ElLoadingService  ElLoadingDirective
-```
-
-### rem 换算速查（根字体 10px）
-
-```
-4px = 0.4rem    8px = 0.8rem    12px = 1.2rem   16px = 1.6rem
-20px = 2rem     24px = 2.4rem   32px = 3.2rem   40px = 4rem
-56px = 5.6rem   100px = 10rem   1280px = 128rem
-```
-
-## 附录 B — 代码模式速查
-
-### 状态映射表 + el-tag
-
-```vue
-<script setup>
-import { STATUS_MAP } from './js/constants.js'
-// constants.js: export const STATUS_MAP = { running: { label: '运行中', type: 'success' }, ... }
-</script>
-<template>
-  <el-table :data="tableData" v-loading="loading">
-    <el-table-column label="状态" width="10rem">
-      <template #default="{ row }">
-        <el-tag :type="STATUS_MAP[row.status]?.type">{{ STATUS_MAP[row.status]?.label }}</el-tag>
-      </template>
-    </el-table-column>
-  </el-table>
-</template>
-```
-
-### 表格操作列（≤3 按钮 + dropdown 收纳）
-
-```vue
-<el-table-column label="操作" fixed="right" width="18rem">
-  <template #default="{ row }">
-    <el-button link type="primary" :icon="View" @click="handleView(row)">查看</el-button>
-    <el-button link type="primary" :icon="Edit" @click="handleEdit(row)">编辑</el-button>
-    <el-dropdown @command="(cmd) => handleCommand(cmd, row)">
-      <el-button link type="primary">更多<el-icon><ArrowDown /></el-icon></el-button>
-      <template #dropdown>
-        <el-dropdown-menu>
-          <el-dropdown-item command="export">导出</el-dropdown-item>
-          <el-dropdown-item command="delete" divided>删除</el-dropdown-item>
-        </el-dropdown-menu>
-      </template>
-    </el-dropdown>
-  </template>
-</el-table-column>
-```
-
-### KPI 指标卡片（看板页标配）
-
-```vue
-<el-row :gutter="1.6rem" class="kpi-row">
-  <el-col :span="6" v-for="item in kpiData" :key="item.label">
-    <el-card shadow="hover" class="kpi-card">
-      <div class="kpi-inner">
-        <div>
-          <div class="kpi-label">{{ item.label }}</div>
-          <div class="kpi-value">{{ item.value }}</div>
-        </div>
-        <el-icon :size="40" :color="item.color"><component :is="item.icon" /></el-icon>
-      </div>
-    </el-card>
-  </el-col>
-</el-row>
-```
-
-### Less 样式写法（嵌套 + 变量 + rem）
-
-```less
-<style lang="less" scoped>
-@gap: 1.6rem;
-
-.page-root {
-  min-height: 100%;
-  padding: 2.4rem;
-
-  .header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin-bottom: @gap;
-  }
-
-  .title {
-    font-size: 1.6rem;
-    font-weight: 700;
-    color: var(--gts-text-1);
-  }
-
-  .kpi-row {
-    margin-bottom: @gap;
-  }
-}
-</style>
-```
-
-> **完整页面示例** 见 `references/code_patterns.md`（按需查阅，非必读）。
+`px / 10 = rem`（如 16px → 1.6rem、24px → 2.4rem、8px → 0.8rem）
 
 ---
 
 ## References
 
-- **[references/code_patterns.md](references/code_patterns.md)** — 完整列表页代码示例（按需查阅）
-- **[references/design_system.md](references/design_system.md)** — GTS token 全表、换肤协议、布局规范、EP 组件要点（按需查阅）
-- **[scripts/preview/src/assets/style/base.less](scripts/preview/src/assets/style/base.less)** — Less 变量 + 混入速查
-- **[scripts/preview/src/assets/themes/README.md](scripts/preview/src/assets/themes/README.md)** — 皮肤文件协议
-- **[scripts/preview/src/README.md](scripts/preview/src/README.md)** — 交付件接入说明
+- **[references/design_system.md](references/design_system.md)** — GTS token 全表、换肤协议、布局规范（按需查阅）

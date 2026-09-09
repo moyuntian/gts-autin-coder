@@ -27,7 +27,7 @@
 //   RESULT: FAIL | <first error>     (+ WARN lines before it)
 //   RESULT: OK
 
-import { existsSync, readFileSync, readdirSync, writeFileSync, mkdtempSync, rmSync } from 'fs';
+import { existsSync, readFileSync, readdirSync, writeFileSync, mkdtempSync, rmSync, statSync } from 'fs';
 import { join, dirname, resolve, extname } from 'path';
 import { fileURLToPath } from 'url';
 import { spawnSync } from 'child_process';
@@ -112,8 +112,10 @@ const pascal = (s) => s.replace(/(^|-)(\w)/g, (m, a, b) => b.toUpperCase());
 // ---------- 1. structure ----------
 const htmlPath = join(root, 'index.gts.html');
 const srcDir = join(root, 'src');
+const mockDir = join(root, 'mock');
 if (!existsSync(htmlPath)) fail(`index.gts.html not found: ${htmlPath}`);
 if (!existsSync(srcDir)) fail(`src folder not found: ${srcDir}`);
+const hasMock = existsSync(mockDir) && statSync(mockDir).isDirectory();
 
 const html = readFileSync(htmlPath, 'utf8');
 const REQUIRED_HTML = [
@@ -136,16 +138,28 @@ for (const p of ['App.vue', 'main.js', join('assets', 'themes', 'base.css'), joi
 }
 
 const vueFiles = walkFiles(srcDir, ['.vue']);
-const jsFiles = walkFiles(srcDir, ['.js']);
+let jsFiles = walkFiles(srcDir, ['.js']);
 const cssFiles = walkFiles(srcDir, ['.css', '.less']);
+if (hasMock) {
+  jsFiles = [...jsFiles, ...walkFiles(mockDir, ['.js'])];
+}
 if (vueFiles.length === 0) fail('no .vue files under src/');
 const pageIndexes = vueFiles.filter((f) => /[\\/]views[\\/][^\\/]+[\\/]index\.vue$/.test(f));
 if (pageIndexes.length === 0) fail('no page entry found (expected src/views/{kebab}/index.vue)');
 
-// file map for relative import resolution (posix keys from src root)
+// file map for relative import resolution (posix keys from src root or mock root)
 const fileMap = new Set();
 for (const f of [...vueFiles, ...jsFiles, ...cssFiles, ...walkFiles(srcDir, ['.json'])]) {
-  fileMap.add('/' + f.slice(srcDir.length).split('\\').join('/').replace(/^\/+/, ''));
+  if (f.startsWith(srcDir)) {
+    fileMap.add('/' + f.slice(srcDir.length).split('\\').join('/').replace(/^\/+/, ''));
+  } else if (hasMock && f.startsWith(mockDir)) {
+    fileMap.add('/mock/' + f.slice(mockDir.length).split('\\').join('/').replace(/^\/+/, ''));
+  }
+}
+if (hasMock) {
+  for (const f of walkFiles(mockDir, ['.json'])) {
+    fileMap.add('/mock/' + f.slice(mockDir.length).split('\\').join('/').replace(/^\/+/, ''));
+  }
 }
 const ASSET_EXT = ['.png', '.jpg', '.jpeg', '.gif', '.svg', '.webp', '.ico', '.bmp'];
 
@@ -286,7 +300,14 @@ for (const file of vueFiles) {
 const tmp = mkdtempSync(join(tmpdir(), 'gts-verify-'));
 try {
   for (const file of jsFiles) {
-    const rel = '/' + file.slice(srcDir.length).split('\\').join('/').replace(/^\/+/, '');
+    let rel;
+    if (file.startsWith(srcDir)) {
+      rel = '/' + file.slice(srcDir.length).split('\\').join('/').replace(/^\/+/, '');
+    } else if (hasMock && file.startsWith(mockDir)) {
+      rel = '/mock/' + file.slice(mockDir.length).split('\\').join('/').replace(/^\/+/, '');
+    } else {
+      continue;
+    }
     const text = readFileSync(file, 'utf8');
 
     const tmpFile = join(tmp, rel.replace(/\//g, '_') + '.mjs');

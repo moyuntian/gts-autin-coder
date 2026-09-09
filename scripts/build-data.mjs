@@ -28,25 +28,31 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 
 const TEXT_EXT = new Set(['.vue', '.js', '.mjs', '.css', '.less', '.json']);
 
-export function collectSources(srcDir) {
-  const files = [];
-  (function walk(dir) {
-    for (const entry of readdirSync(dir, { withFileTypes: true })) {
-      const full = join(dir, entry.name);
-      if (entry.isDirectory()) {
-        if (entry.name === 'node_modules' || entry.name.startsWith('.')) continue;
-        walk(full);
-      } else if (TEXT_EXT.has(extname(entry.name))) {
-        files.push(full);
-      }
-    }
-  })(srcDir);
+export function collectSources(srcDir, mockDir) {
   const map = {};
-  for (const f of files) {
-    // key: "/src/..." posix path — matches the paths vue3-sfc-loader resolves
-    // (entry '/src/App.vue', relative imports resolve under '/src/...')
-    const rel = f.slice(srcDir.length).split('\\').join('/').replace(/^\/+/, '');
-    map['/src/' + rel] = readFileSync(f, 'utf8');
+
+  function walkAndCollect(dir, prefix) {
+    const files = [];
+    (function walk(d) {
+      for (const entry of readdirSync(d, { withFileTypes: true })) {
+        const full = join(d, entry.name);
+        if (entry.isDirectory()) {
+          if (entry.name === 'node_modules' || entry.name.startsWith('.')) continue;
+          walk(full);
+        } else if (TEXT_EXT.has(extname(entry.name))) {
+          files.push(full);
+        }
+      }
+    })(dir);
+    for (const f of files) {
+      const rel = f.slice(dir.length).split('\\').join('/').replace(/^\/+/, '');
+      map[prefix + rel] = readFileSync(f, 'utf8');
+    }
+  }
+
+  walkAndCollect(srcDir, '/src/');
+  if (mockDir && existsSync(mockDir) && statSync(mockDir).isDirectory()) {
+    walkAndCollect(mockDir, '/mock/');
   }
   return map;
 }
@@ -54,13 +60,14 @@ export function collectSources(srcDir) {
 export function refresh(dir) {
   const root = resolve(dir);
   const srcDir = join(root, 'src');
+  const mockDir = join(root, 'mock');
   if (!existsSync(srcDir) || !statSync(srcDir).isDirectory()) {
     return { ok: false, reason: `src folder not found: ${srcDir}` };
   }
   if (!existsSync(join(root, 'index.gts.html'))) {
     return { ok: false, reason: `index.gts.html not found: ${join(root, 'index.gts.html')}` };
   }
-  const map = collectSources(srcDir);
+  const map = collectSources(srcDir, mockDir);
   if (!map['/src/App.vue']) {
     return { ok: false, reason: 'src/App.vue not found (preview entry)' };
   }

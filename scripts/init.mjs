@@ -1,36 +1,42 @@
 #!/usr/bin/env node
 // init.mjs
-// Initializes a gts-autin page workspace: creates {slug}/ with a REAL Vue
-// deliverable (src/) plus the offline preview runtime. The AI then authors
-// .vue SFC files under src/ — the code IS the deliverable.
+// Initializes a gts-autin page workspace: creates {slug}/ with a REAL Vue 3
+// deliverable (standard structure under src/) plus the offline preview runtime.
+//
+// init.mjs ONLY creates essential files:
+//   - mock/modules/{slug}.js     (always)
+//   - src/locales/               (always — global i18n)
+//   - src/views/{slug}/          (always — starter page)
+//   - src/router/index.js        (always — preview needs it)
+//   - src/App.vue + main.js      (always — FIXED from template)
+//
+// Other directories (api/, composables/, constants/, directives/, stores/,
+// utils/, router/guards.js, router/modules/, components/) are created
+// ON-DEMAND by the AI agent as needed.
 //
 // Layout created:
 //   {slug}/
-//   ├── src/                        ← 交付件（真实工程结构，直接可拷贝）
-//   │   ├── main.js                 # 工程入口示例
-//   │   ├── App.vue                 # 应用壳：路由出口（<RouterView />）
-//   │   ├── README.md               # 接入说明
-//   │   ├── views/{kebab}/          # 页面主目录
-//   │   │   ├── index.vue           # 页面主组件（交付入口）
-//   │   │   ├── components/          # 页面私有子组件（按需创建）
-//   │   │   ├── js/constants.js     # 常量定义
-//   │   │   └── mock/home.js        # Mock 数据 + API 模拟
-//   │   ├── components/             # 跨页共享组件（按需创建）
-//   │   ├── router/index.js         # 路由配置
-//   │   └── assets/
-//   │       ├── fonts/              # HarmonyOS Sans（FIXED）
-//   │       ├── images/             # SVG 图标素材（按需创建）
-//   │       ├── uploads/            # 用户提供的图片素材（按需创建）
-//   │       ├── style/              # Less 样式（base.less + theme/dark.less）
-//   │       └── themes/             # GTS 主题体系（FIXED）
-//   │           ├── base.css / gts-bridge.css / gts-default.css
-//   ├── public/library/             # 预览运行时 UMD（FIXED — 勿改勿删，不随工程交付）
-//   ├── index.gts.html              # 离线预览加载器（FIXED）
-//   └── preview-data.js             # src/ 源码映射（build 自动重新生成，勿手改）
+//   ├── mock/modules/{slug}.js           # Mock 数据 + API 模拟
+//   ├── public/library/                  # 预览运行时 UMD（FIXED）
+//   ├── src/
+//   │   ├── main.js                      # 工程入口（FIXED）
+//   │   ├── App.vue                      # 应用壳
+//   │   ├── README.md                    # 接入说明（FIXED）
+//   │   ├── assets/                      # 主题/字体/样式（FIXED）
+//   │   ├── mock/modules/{slug}.js       # Mock 数据 + API 模拟
+//   │   ├── locales/                     # 全局 i18n
+//   │   │   ├── lang/zh-CN/common.json
+//   │   │   ├── lang/en-US/common.json
+//   │   │   └── index.js
+//   │   ├── router/index.js              # 路由（内联，无 guards/modules）
+//   │   └── views/{slug}/               # ★ 页面主目录
+//   │       ├── index.vue                # 页面主组件
+//   │       └── js/constants.js          # 页面常量
+//   ├── index.gts.html                   # 离线预览加载器（FIXED）
+//   └── preview-data.js                  # 源码映射（build 自动生成）
 //
 // Usage:
 //   node init.mjs "<artifact-folder>" "<slug>"
-//   (if artifact-folder is omitted, falls back to cwd)
 //
 // Output (agent-parseable):
 //   RESULT: OK
@@ -43,7 +49,6 @@ import {
   existsSync,
   statSync,
   mkdirSync,
-  rmSync,
   cpSync,
   writeFileSync,
   readdirSync,
@@ -60,7 +65,7 @@ function fail(reason) {
   process.exit(1);
 }
 
-// --- args: [artifactFolder?, slug] ---
+// --- args ---
 const args = process.argv.slice(2).filter((a) => !a.startsWith('-'));
 let artifactFolder, slug;
 if (args.length === 2) {
@@ -81,14 +86,14 @@ if (!/^[a-z0-9]+(-[a-z0-9]+){1,5}$/.test(slug)) {
 
 // ---------- 1. resolve template ----------
 const preview = resolve(__dirname, 'preview');
-const scaffoldSrc = join(preview, 'src');          // main.js + assets/{fonts,themes,style} + router/
-const libSrc = join(preview, 'public', 'library'); // preview-only UMD runtime
+const scaffoldSrc = join(preview, 'src');
+const libSrc = join(preview, 'public', 'library');
 const htmlSrc = join(preview, 'index.gts.html');
 for (const p of [scaffoldSrc, libSrc, htmlSrc]) {
   if (!existsSync(p)) fail(`template incomplete, missing: ${p}`);
 }
 
-// ---------- 2. derive page component name (PascalCase for component name) ----------
+// ---------- 2. derive names ----------
 const pageName = slug
   .split('-')
   .map((s) => s.charAt(0).toUpperCase() + s.slice(1))
@@ -101,21 +106,120 @@ if (existsSync(join(dest, 'src'))) {
 }
 mkdirSync(dest, { recursive: true });
 
-// ---------- 4. copy deliverable scaffold ----------
-// scaffold src 自带 assets/{fonts,themes,style} + main.js + README.md + router/
+// ---------- 4. copy deliverable scaffold (main.js + assets + README) ----------
 const srcDir = join(dest, 'src');
 cpSync(scaffoldSrc, srcDir, { recursive: true });
-mkdirSync(join(srcDir, 'views', slug, 'js'), { recursive: true });
-mkdirSync(join(srcDir, 'views', slug, 'mock'), { recursive: true });
 
-// ---------- 5. starter page ----------
+// ---------- 5. create directories ----------
+mkdirSync(join(dest, 'mock', 'modules'), { recursive: true });
+mkdirSync(join(srcDir, 'locales', 'lang', 'zh-CN'), { recursive: true });
+mkdirSync(join(srcDir, 'locales', 'lang', 'en-US'), { recursive: true });
+mkdirSync(join(srcDir, 'views', slug, 'js'), { recursive: true });
+
+// ---------- 6. write starter files ----------
+
+// --- 6a. mock/modules/{slug}.js ---
+writeFileSync(
+  join(dest, 'mock', 'modules', `${slug}.js`),
+  `// ${pageName} — Mock 数据 + API 请求模拟
+// 真实工程中替换为实际 API 调用（axios/fetch）
+
+const mockData = [
+  { id: 1, name: '${pageName}示例-01', status: 'running' },
+  { id: 2, name: '${pageName}示例-02', status: 'stopped' },
+  { id: 3, name: '${pageName}示例-03', status: 'pending' },
+  { id: 4, name: '${pageName}示例-04', status: 'idle' },
+  { id: 5, name: '${pageName}示例-05', status: 'maintenance' },
+]
+
+export function fetchList(params = {}) {
+  return new Promise((resolve) => {
+    setTimeout(() => {
+      let result = mockData
+      if (params.keyword) {
+        result = result.filter((item) => item.name.includes(params.keyword))
+      }
+      resolve({ data: result, total: result.length })
+    }, 300)
+  })
+}
+
+export function fetchDetail(id) {
+  return new Promise((resolve) => {
+    setTimeout(() => {
+      resolve({ data: mockData.find((item) => item.id === id) })
+    }, 200)
+  })
+}
+`,
+  'utf8',
+);
+
+// --- 6b. locales/lang/zh-CN/common.json ---
+writeFileSync(
+  join(srcDir, 'locales', 'lang', 'zh-CN', 'common.json'),
+  JSON.stringify({
+    confirm: '确定', cancel: '取消', search: '搜索', reset: '重置',
+    add: '新增', edit: '编辑', delete: '删除', view: '查看', refresh: '刷新',
+    operation: '操作', status: '状态', name: '名称', success: '成功', failed: '失败',
+  }, null, 2) + '\n',
+  'utf8',
+);
+
+// --- 6c. locales/lang/en-US/common.json ---
+writeFileSync(
+  join(srcDir, 'locales', 'lang', 'en-US', 'common.json'),
+  JSON.stringify({
+    confirm: 'Confirm', cancel: 'Cancel', search: 'Search', reset: 'Reset',
+    add: 'Add', edit: 'Edit', delete: 'Delete', view: 'View', refresh: 'Refresh',
+    operation: 'Action', status: 'Status', name: 'Name', success: 'Success', failed: 'Failed',
+  }, null, 2) + '\n',
+  'utf8',
+);
+
+// --- 6d. locales/index.js ---
+writeFileSync(
+  join(srcDir, 'locales', 'index.js'),
+  `// i18n 入口 — 预览环境简单对象合并；真实工程用 vue-i18n
+import zhCNCommon from './lang/zh-CN/common.json'
+import enUSCommon from './lang/en-US/common.json'
+
+export const messages = {
+  'zh-CN': { common: zhCNCommon },
+  'en-US': { common: enUSCommon },
+}
+`,
+  'utf8',
+);
+
+// --- 6e. router/index.js (simple inline, no guards/modules) ---
+writeFileSync(
+  join(srcDir, 'router', 'index.js'),
+  `import { createRouter, createWebHashHistory } from 'vue-router'
+import ${pageName} from '../views/${slug}/index.vue'
+
+const routes = [
+  { path: '/', name: '${slug}', component: ${pageName} },
+]
+
+const router = createRouter({
+  history: createWebHashHistory(),
+  routes,
+})
+
+export default router
+`,
+  'utf8',
+);
+
+// --- 6f. views/{slug}/index.vue ---
 writeFileSync(
   join(srcDir, 'views', slug, 'index.vue'),
   `<script setup>
 // ${pageName} — 页面主组件（交付入口；真实工程中由路由挂载）
 import { ref, onMounted } from 'vue'
 import { Monitor } from '@element-plus/icons-vue'
-import { fetchList } from './mock/home.js'
+import { fetchList } from '../../../mock/modules/${slug}.js'
 import { PAGE_TITLE, STATUS_MAP } from './js/constants.js'
 
 const loading = ref(false)
@@ -182,7 +286,7 @@ onMounted(() => {
   'utf8',
 );
 
-// ---------- 5a. constants.js ----------
+// --- 6g. views/{slug}/js/constants.js ---
 writeFileSync(
   join(srcDir, 'views', slug, 'js', 'constants.js'),
   `// ${pageName} — 常量定义
@@ -209,69 +313,10 @@ export const STATUS_OPTIONS = [
   'utf8',
 );
 
-// ---------- 5b. mock/home.js ----------
-writeFileSync(
-  join(srcDir, 'views', slug, 'mock', 'home.js'),
-  `// ${pageName} — Mock 数据 + API 请求模拟
-// 真实工程中替换为实际 API 调用（axios/fetch）
-
-const mockData = [
-  { id: 1, name: '${pageName}示例-01', status: 'running' },
-  { id: 2, name: '${pageName}示例-02', status: 'stopped' },
-  { id: 3, name: '${pageName}示例-03', status: 'pending' },
-  { id: 4, name: '${pageName}示例-04', status: 'idle' },
-  { id: 5, name: '${pageName}示例-05', status: 'maintenance' },
-]
-
-export function fetchList(params = {}) {
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      let result = mockData
-      if (params.keyword) {
-        result = result.filter((item) => item.name.includes(params.keyword))
-      }
-      resolve({ data: result, total: result.length })
-    }, 300)
-  })
-}
-
-export function fetchDetail(id) {
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      resolve({ data: mockData.find((item) => item.id === id) })
-    }, 200)
-  })
-}
-`,
-  'utf8',
-);
-
-// ---------- 5c. router/index.js (update with page route) ----------
-writeFileSync(
-  join(srcDir, 'router', 'index.js'),
-  `import { createRouter, createWebHashHistory } from 'vue-router'
-import ${pageName} from '../views/${slug}/index.vue'
-
-// createWebHashHistory 兼容 file:// 离线预览；真实工程可改 createWebHistory()
-const routes = [
-  { path: '/', name: '${slug}', component: ${pageName} },
-]
-
-const router = createRouter({
-  history: createWebHashHistory(),
-  routes,
-})
-
-export default router
-`,
-  'utf8',
-);
-
-// ---------- 6. app shell ----------
+// --- 6h. App.vue ---
 writeFileSync(
   join(srcDir, 'App.vue'),
   `<script setup>
-// 应用壳：路由出口（真实工程由 router 挂载页面组件，预览同样走 router）
 import { RouterView } from 'vue-router'
 </script>
 
