@@ -1,0 +1,85 @@
+.stage {
+  border-radius: var(--radius-container);
+  background: var(--surface-container-highest);
+  transition: background-color 0.2s ease;
+}
+
+.stage + .stage {
+  margin-top: var(--spacing-2);
+}
+
+.stage--active {
+  background: var(--primary-container);
+}
+
+.stage__head {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-2);
+  width: 100%;
+  padding: var(--spacing-2) var(--spacing-3);
+  border: none;
+  background: none;
+  border-radius: var(--radius-container);
+  font: var(--font-body-m);
+  color: var(--on-surface);
+  text-align: left;
+  cursor: pointer;
+}
+
+.stage__head:hover {
+  background: var(--color-hover);
+}
+
+.stage__index {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.25rem;
+  height: 1.25rem;
+  border-radius: var(--radius-full);
+  background: var(--primary-container);
+  color: var(--primary);
+  font: var(--font-caption-m);
+  font-weight: var(--font-weight-semibold);
+}
+
+.stage--open .stage__index {
+  background: var(--primary);
+  color: var(--on-primary);
+}
+
+.stage--open .stage__head:hover {
+  background: transparent;
+}
+
+.stage__name {
+  font: var(--font-body-m);
+  font-weight: var(--font-weight-medium);
+  white-space: nowrap;
+}
+
+.stage__time {
+  margin-left: auto;
+  font: var(--font-caption-m);
+  color: var(--on-surface-variant);
+  text-align: right;
+}
+
+.stage__time i {
+  font-style: normal;
+  color: var(--text-placeholder);
+}
+
+.stage__chev {
+  color: var(--on-surface-variant);
+  flex: 0 0 auto;
+}
+
+.stage__body {
+  padding: 0 var(--spacing-3) var(--spacing-3);
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-2);
+}

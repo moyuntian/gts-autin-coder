@@ -1,0 +1,206 @@
+.city-map {
+  position: relative;
+  flex: 1 1 0;
+  min-height: 0;
+  background: linear-gradient(180deg, var(--blue-05) 0%, var(--surface-container-lowest) 100%);
+  border-bottom: 1px solid var(--divider);
+  overflow: hidden;
+}
+
+.city-map__canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+  font-family: var(--font-family);
+}
+
+.city-ground {
+  fill: var(--surface-container-lowest);
+}
+
+.city-road {
+  fill: var(--divider);
+  opacity: 0.75;
+}
+
+.city-water {
+  fill: var(--blue-10);
+}
+
+/* 东方明珠 */
+.city-tower__shaft {
+  fill: var(--blue-20);
+}
+
+.city-tower__ball {
+  fill: var(--blue-30);
+}
+
+.city-tower__mast {
+  stroke: var(--blue-40);
+  stroke-width: 2;
+}
+
+.city-tower__light {
+  fill: var(--error);
+}
+
+/* 告警标记 */
+.city-alert__halo {
+  fill: var(--error);
+  opacity: 0.16;
+}
+
+.city-alert__dot {
+  fill: var(--error);
+}
+
+.city-alert__mark {
+  fill: var(--on-error);
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.city-alert__chip {
+  fill: var(--error);
+}
+
+.city-alert__label {
+  fill: var(--on-error);
+  font-size: 12px;
+  font-weight: 500;
+}
+
+/* 地点标注 */
+.map-pin__stem {
+  stroke: var(--on-surface);
+  stroke-width: 1;
+  stroke-dasharray: 2 2;
+}
+
+.map-pin__dot {
+  fill: var(--on-surface);
+}
+
+.map-pin__chip {
+  fill: var(--surface-container-highest);
+  stroke: var(--divider);
+  stroke-width: 1;
+}
+
+.map-pin__text {
+  fill: var(--on-surface);
+  font-size: 12px;
+}
+
+.map-pin__accent {
+  fill: var(--error);
+}
+
+/* 地图控件 */
+.map-controls {
+  position: absolute;
+  right: var(--spacing-4);
+  bottom: var(--spacing-4);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 4px;
+  border-radius: var(--radius-container);
+  background: var(--surface-container-highest);
+  box-shadow: var(--shadow-popover);
+}
+
+.map-controls__btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.75rem;
+  height: 1.75rem;
+  border: none;
+  border-radius: var(--radius-base);
+  background: transparent;
+  color: var(--on-surface-variant);
+  cursor: pointer;
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+.map-controls__btn:hover {
+  background: var(--color-hover);
+  color: var(--on-surface);
+}
+
+.map-controls__btn.is-active {
+  background: var(--primary-container);
+  color: var(--primary);
+}
+
+.map-controls__compass {
+  color: var(--primary);
+}
+
+.map-controls__split {
+  width: 1.25rem;
+  height: 1px;
+  background: var(--divider);
+  margin: 2px 0;
+}
+
+/* 图例 */
+.map-legend {
+  position: absolute;
+  left: var(--spacing-4);
+  bottom: var(--spacing-4);
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-2);
+  height: 2rem;
+  padding: 0 var(--spacing-3);
+  border-radius: var(--radius-full);
+  background: var(--surface-container-highest);
+  box-shadow: var(--shadow-popover);
+}
+
+.map-legend__icon {
+  color: var(--on-surface-variant);
+}
+
+.map-legend__title {
+  font: var(--font-body-s);
+  color: var(--on-surface);
+  white-space: nowrap;
+}
+
+.map-legend__low,
+.map-legend__high {
+  font: var(--font-caption-s);
+  color: var(--on-surface-variant);
+}
+
+.map-legend__bar {
+  width: 5.5rem;
+  height: 0.5rem;
+  border-radius: var(--radius-full);
+  background: linear-gradient(
+    90deg,
+    var(--red-50) 0%,
+    var(--orange-50) 26%,
+    var(--yellow-50) 48%,
+    var(--green-50) 72%,
+    var(--blue-50) 100%
+  );
+}
+
+.map-legend__gear {
+  color: var(--on-surface-variant);
+  cursor: pointer;
+}
+
+.map-legend__gear:hover {
+  color: var(--on-surface);
+}
+
+.dark .city-map__canvas {
+  filter: brightness(0.86) saturate(0.92);
+}

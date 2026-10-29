@@ -1,0 +1,89 @@
+.device-diagram {
+  padding: var(--spacing-2) var(--spacing-2) 0;
+  border-radius: var(--radius-base);
+  background: var(--surface-container-lowest);
+}
+
+.device-diagram__svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  max-height: 7.5rem;
+  font-family: var(--font-family);
+}
+
+.dd-face--top {
+  fill: var(--surface-container-highest);
+  stroke: var(--outline-variant);
+  stroke-width: 1;
+}
+
+.dd-face--side {
+  fill: var(--surface-variant);
+  stroke: var(--outline-variant);
+  stroke-width: 1;
+}
+
+.dd-face--front {
+  fill: var(--surface-container-highest);
+  stroke: var(--outline);
+  stroke-width: 1;
+}
+
+.dd-slot__panel {
+  fill: var(--surface-variant);
+  stroke: var(--outline-variant);
+  stroke-width: 1;
+}
+
+.dd-slot__bar {
+  fill: var(--outline);
+}
+
+.dd-slot__label {
+  font-size: 7px;
+  fill: var(--color-text-secondary);
+  letter-spacing: 0.04em;
+}
+
+.dd-port {
+  fill: var(--surface-container-highest);
+  stroke: var(--outline);
+  stroke-width: 1;
+}
+
+.dd-slot--fault .dd-slot__panel {
+  fill: var(--error-container);
+  stroke: var(--error);
+  stroke-width: 1.5;
+}
+
+.dd-slot--fault .dd-slot__bar {
+  fill: var(--error);
+}
+
+.dd-port--fault {
+  fill: var(--error);
+  stroke: var(--error);
+}
+
+.dd-leader {
+  stroke: var(--error);
+  stroke-width: 1;
+  stroke-dasharray: 3 2;
+}
+
+.dd-leader-dot {
+  fill: var(--error);
+}
+
+.dd-fault-label {
+  font-size: 10px;
+  font-weight: 600;
+  fill: var(--error);
+}
+
+.dd-fault-sub {
+  font-size: 9px;
+  fill: var(--color-text-secondary);
+}
